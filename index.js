@@ -51,7 +51,7 @@ function sendMessage() {
     }
     if (message === "help") {
       console.log(
-        "Available commands: exit , change (change discord-webhookURL,url)"
+        "Available commands: exit , loop(loop message), change (change discord-webhookURL,url)"
       );
       sendMessage();
       return;
@@ -69,8 +69,8 @@ function sendMessage() {
         avatar_url: iconURL,
       };
       try {
-        let post = await axios.post(url, JSON.stringify(body), config);
-        console.log("Message sent successfully:", post.data);
+        await axios.post(url, JSON.stringify(body), config);
+        console.log("Message sent successfully");
         sendMessage();
       } catch (error) {
         console.log("Error sending message:", error.message);
@@ -79,10 +79,60 @@ function sendMessage() {
       }
     };
     if (message) {
-      send();
+      if (message !== "loop") {
+        send();
+      }
     } else {
       console.log("Please enter a valid message");
       sendMessage();
+    }
+    if (message === "loop") {
+      rl.question("message :", (message) => {
+        if (!message) {
+          console.log("Please enter a valid message");
+          sendMessage();
+          return;
+        }
+        rl.question("number :", async (num) => {
+          parseInt(num);
+          if (num === NaN) {
+            console.log("Please enter a valid number");
+            sendMessage();
+            return;
+          }
+          let i = 0;
+          while (i < num) {
+            const send = async () => {
+              const config = {
+                headers: {
+                  Accept: "application/json",
+                  "Content-type": "application/json",
+                },
+              };
+              let body = {
+                username: name,
+                content: message,
+                avatar_url: iconURL,
+              };
+              try {
+                let post = await axios.post(url, JSON.stringify(body), config);
+                console.log("Message sent successfully:", post.data);
+                sendMessage();
+              } catch (error) {
+                console.log("Error sending message:", error.message);
+                sendMessage();
+                return;
+              }
+            };
+            await send();
+            if (i < num) {
+              await new Promise((resolve) => setTimeout(resolve, 600)); // 3秒の遅延
+            }
+            i++;
+          }
+          sendMessage();
+        });
+      });
     }
   });
 }
